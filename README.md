@@ -1,5 +1,11 @@
 # JW.Org MCP Tool
 
+[![Tests](https://github.com/Bjern/jw-org-mcp/actions/workflows/tests.yml/badge.svg)](https://github.com/Bjern/jw-org-mcp/actions/workflows/tests.yml)
+[![Python 3.13+](https://img.shields.io/badge/python-3.13%2B-blue.svg)](https://www.python.org/downloads/)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![mypy](https://img.shields.io/badge/type--checked-mypy-blue.svg)](https://mypy-lang.org/)
+[![security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
+
 A Model Context Protocol (MCP) server that provides controlled, verifiable access to content from jw.org for AI applications and LLM integrations.
 
 ## Overview
@@ -27,7 +33,7 @@ The JW.Org MCP Tool ensures that scriptural and doctrinal information comes excl
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/jw-org-mcp.git
+git clone https://github.com/Bjern/jw-org-mcp.git
 cd jw-org-mcp
 
 # Install dependencies
@@ -126,10 +132,12 @@ The query parser automatically extracts "love" as the search term.
 
 ### get_article
 
-Retrieve full article content from a jw.org URL.
+Retrieve full article content from a jw.org URL. Supports both direct article URLs and publication finder URLs.
+
+When given a publication-level URL (e.g., a magazine issue), the tool returns a table of contents listing individual articles with their direct URLs, which can then be fetched individually.
 
 **Parameters:**
-- `url` (required): Article URL from wol.jw.org
+- `url` (required): Article URL from wol.jw.org or a publication finder URL
 
 **Example:**
 ```json
@@ -194,13 +202,19 @@ uv run ruff check .
 uv run ruff format .
 
 # Type checking
-uv run mypy src/jw_org_mcp
+uv run mypy src/
+
+# Security scan
+uv run bandit -r src/ -c pyproject.toml
 ```
 
 ### Project Structure
 
 ```
 jw-org-mcp/
+├── .github/
+│   └── workflows/
+│       └── tests.yml         # CI pipeline (lint, type check, security, tests)
 ├── src/
 │   └── jw_org_mcp/
 │       ├── __init__.py       # Entry point
@@ -239,10 +253,11 @@ jw-org-mcp/
 ### Content Retrieval
 
 1. Fetch HTML content from wol.jw.org
-2. Parse article structure (title, paragraphs, references)
-3. Extract clean text without HTML artifacts
-4. Cache parsed content
-5. Return structured article data
+2. If the page is a publication index (table of contents), extract article links and return them
+3. Otherwise, parse article structure (title, paragraphs, references)
+4. Extract clean text without HTML artifacts
+5. Cache parsed content
+6. Return structured article data
 
 ## API Response Format
 
@@ -304,7 +319,7 @@ All errors are logged and returned with descriptive messages.
 ## Support
 
 For issues and questions:
-- GitHub Issues: [Add your repo URL]
+- GitHub Issues: https://github.com/Bjern/jw-org-mcp/issues
 - Documentation: See `docs/` folder
 
 ## Acknowledgments

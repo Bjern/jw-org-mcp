@@ -26,7 +26,7 @@ app = Server("jw-org-mcp")
 client = JWOrgClient()
 
 
-@app.list_tools()
+@app.list_tools()  # type: ignore[misc, no-untyped-call]
 async def list_tools() -> list[Tool]:
     """List available MCP tools."""
     return [
@@ -120,7 +120,7 @@ async def list_tools() -> list[Tool]:
     ]
 
 
-@app.call_tool()
+@app.call_tool()  # type: ignore[misc]
 async def call_tool(name: str, arguments: Any) -> list[TextContent]:
     """Handle tool calls."""
     try:

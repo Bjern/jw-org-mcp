@@ -215,7 +215,8 @@ class ArticleParser:
 
             for para in para_elements:
                 # Skip if paragraph has class indicating it's not content
-                classes = para.get("class", [])
+                class_attr = para.get("class")
+                classes = class_attr if isinstance(class_attr, list) else []
                 if any(cls in ["caption", "footnote", "boxTtl"] for cls in classes):
                     continue
 
@@ -277,7 +278,8 @@ class ArticleParser:
         seen_urls: set[str] = set()
 
         for link in article_links:
-            href = link.get("href", "")
+            href_val = link.get("href", "")
+            href = href_val if isinstance(href_val, str) else ""
             link_title = link.get_text(strip=True)
 
             if not href or not link_title:
