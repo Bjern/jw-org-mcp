@@ -82,6 +82,14 @@ To use this MCP server with Claude Desktop, add it to your Claude configuration 
 
 **Note:** Replace `E:\\Projects\\Python\\jw-org-mcp` with the actual path to your project directory. On Windows, use double backslashes (`\\`) in the path.
 
+>WINDOWS -> FEB 2026 -> If you are using this as a custom connector MCP tool, then, you might find that the Claude Desktop app on Windows is not working properly. The app does not launch, etc...
+>
+>This is because, there is a bug that the new app (Since Feb 2026) has changed it's default folder to the MSIX virtualized path:
+>
+>C:\Users\{username}\AppData\Local\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\Claude\claude_desktop_config.json
+>
+> Or paste %localappdata%\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\Claude in the windows Run dialog.
+
 After saving the configuration:
 1. Restart Claude Desktop
 2. The JW.Org MCP tools will be available in your conversations
