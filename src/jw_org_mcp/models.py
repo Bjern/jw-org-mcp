@@ -39,6 +39,21 @@ class ArticleContent(BaseModel):
     source_url: str
 
 
+class PublicationIndexEntry(BaseModel):
+    """A single entry in a publication index/table of contents."""
+
+    title: str
+    url: str
+
+
+class PublicationIndex(BaseModel):
+    """Parsed publication index/table of contents page."""
+
+    title: str
+    articles: list[PublicationIndexEntry]
+    source_url: str
+
+
 class ScriptureContent(BaseModel):
     """Scripture content."""
 

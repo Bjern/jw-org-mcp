@@ -7,7 +7,7 @@ from typing import Any
 from bs4 import BeautifulSoup
 
 from .exceptions import ParseError
-from .models import ArticleContent, SearchResult
+from .models import ArticleContent, PublicationIndex, PublicationIndexEntry, SearchResult
 
 logger = logging.getLogger(__name__)
 
@@ -177,15 +177,19 @@ class ArticleParser:
     """Parses article content from wol.jw.org."""
 
     @staticmethod
-    def parse_article(html: str, url: str) -> ArticleContent:
+    def parse_article(html: str, url: str) -> ArticleContent | PublicationIndex:
         """Parse article content from HTML.
+
+        If the page is a publication index/table of contents (no article
+        paragraphs but contains links to individual articles), returns a
+        PublicationIndex instead.
 
         Args:
             html: Raw HTML content
             url: Source URL
 
         Returns:
-            ArticleContent object
+            ArticleContent or PublicationIndex object
 
         Raises:
             ParseError: If parsing fails
@@ -211,7 +215,8 @@ class ArticleParser:
 
             for para in para_elements:
                 # Skip if paragraph has class indicating it's not content
-                classes = para.get("class", [])
+                class_attr = para.get("class")
+                classes = class_attr if isinstance(class_attr, list) else []
                 if any(cls in ["caption", "footnote", "boxTtl"] for cls in classes):
                     continue
 
@@ -227,16 +232,80 @@ class ArticleParser:
                     if ref_text:
                         references.append(ref_text)
 
-            if not paragraphs:
-                raise ParseError("Could not extract any paragraphs from article")
+            if paragraphs:
+                return ArticleContent(
+                    title=title,
+                    paragraphs=paragraphs,
+                    references=list(set(references)),  # Remove duplicates
+                    source_url=url,
+                )
 
-            return ArticleContent(
-                title=title,
-                paragraphs=paragraphs,
-                references=list(set(references)),  # Remove duplicates
-                source_url=url,
-            )
+            # No paragraphs found — try parsing as a publication index/TOC
+            index = ArticleParser._try_parse_publication_index(soup, url)
+            if index:
+                return index
 
+            raise ParseError("Could not extract any paragraphs from article")
+
+        except ParseError:
+            raise
         except Exception as e:
             logger.error(f"Error parsing article: {e}")
             raise ParseError(f"Failed to parse article: {e}") from e
+
+    @staticmethod
+    def _try_parse_publication_index(
+        soup: BeautifulSoup, url: str
+    ) -> PublicationIndex | None:
+        """Try to parse the page as a publication index/table of contents.
+
+        Detects pages that list links to individual articles (e.g., a magazine
+        issue's table of contents).
+
+        Args:
+            soup: Parsed HTML
+            url: Source URL
+
+        Returns:
+            PublicationIndex if article links are found, None otherwise
+        """
+        # Look for links to individual articles (/wol/d/ pattern)
+        article_links = soup.find_all("a", href=re.compile(r"/wol/d/"))
+        if not article_links:
+            return None
+
+        entries: list[PublicationIndexEntry] = []
+        seen_urls: set[str] = set()
+
+        for link in article_links:
+            href_val = link.get("href", "")
+            href = href_val if isinstance(href_val, str) else ""
+            link_title = link.get_text(strip=True)
+
+            if not href or not link_title:
+                continue
+
+            # Build full URL
+            full_url = f"https://wol.jw.org{href}" if href.startswith("/") else href
+
+            # Strip query parameters from the URL for deduplication and cleanliness
+            clean_url = full_url.split("?")[0]
+
+            if clean_url in seen_urls:
+                continue
+            seen_urls.add(clean_url)
+
+            entries.append(PublicationIndexEntry(title=link_title, url=clean_url))
+
+        if not entries:
+            return None
+
+        # Get publication title from page heading
+        h1 = soup.find("h1")
+        pub_title = h1.get_text(strip=True) if h1 else "Publication Index"
+
+        return PublicationIndex(
+            title=pub_title,
+            articles=entries,
+            source_url=url,
+        )

@@ -1,13 +1,12 @@
 """Configuration management for JW.Org MCP Tool."""
 
-from pydantic import ConfigDict
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     """Application settings."""
 
-    model_config = ConfigDict(env_prefix="JWORG_MCP_")
+    model_config = SettingsConfigDict(env_prefix="JWORG_MCP_")
 
     # JW.Org URLs
     jworg_base_url: str = "https://www.jw.org"
