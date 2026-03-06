@@ -10,7 +10,7 @@ from .auth import AuthManager
 from .cache import Cache
 from .config import settings
 from .exceptions import ContentRetrievalError, SearchError
-from .models import ArticleContent, ResponseMetadata, SearchResponse
+from .models import ArticleContent, PublicationIndex, ResponseMetadata, SearchResponse
 from .parser import ArticleParser, QueryParser, SearchResponseParser
 
 logger = logging.getLogger(__name__)
@@ -142,14 +142,20 @@ class JWOrgClient:
             logger.error(f"Unexpected error during search: {e}")
             raise SearchError(f"Unexpected error during search: {e}") from e
 
-    async def get_article(self, url: str) -> tuple[ArticleContent, ResponseMetadata]:
+    async def get_article(
+        self, url: str
+    ) -> tuple[ArticleContent | PublicationIndex, ResponseMetadata]:
         """Get article content from wol.jw.org.
 
+        If the URL points to a publication index (table of contents) rather
+        than a specific article, returns a PublicationIndex with links to
+        individual articles.
+
         Args:
-            url: Article URL
+            url: Article URL or publication finder URL
 
         Returns:
-            Tuple of (ArticleContent, ResponseMetadata)
+            Tuple of (ArticleContent or PublicationIndex, ResponseMetadata)
 
         Raises:
             ContentRetrievalError: If content retrieval fails

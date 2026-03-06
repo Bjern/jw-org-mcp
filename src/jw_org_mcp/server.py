@@ -9,6 +9,7 @@ from mcp.types import TextContent, Tool
 from .client import JWOrgClient
 from .config import settings
 from .exceptions import JWOrgMCPError
+from .models import PublicationIndex
 
 # Configure logging
 logging.basicConfig(
@@ -201,22 +202,37 @@ async def _handle_get_article(arguments: dict[str, Any]) -> list[TextContent]:
 
     logger.info(f"Fetching article: {url}")
 
-    article, metadata = await client.get_article(url)
+    content, metadata = await client.get_article(url)
 
-    # Format article
-    result_text = f"# {article.title}\n\n"
-    result_text += f"**Source:** {metadata.source_url}\n"
-    result_text += f"**Timestamp:** {metadata.timestamp.isoformat()}\n"
-    result_text += f"**Cached:** {metadata.cache_hit}\n\n"
+    if isinstance(content, PublicationIndex):
+        # Format publication index/table of contents
+        result_text = f"# {content.title}\n\n"
+        result_text += (
+            "**Note:** This URL points to a publication index, not a specific "
+            "article. Use one of the article URLs below with get_article to "
+            "retrieve the full content.\n\n"
+        )
+        result_text += f"**Source:** {metadata.source_url}\n"
+        result_text += f"**Timestamp:** {metadata.timestamp.isoformat()}\n\n"
+        result_text += "## Available Articles\n\n"
+        for i, entry in enumerate(content.articles, 1):
+            result_text += f"{i}. **{entry.title}**\n"
+            result_text += f"   URL: {entry.url}\n\n"
+    else:
+        # Format article
+        result_text = f"# {content.title}\n\n"
+        result_text += f"**Source:** {metadata.source_url}\n"
+        result_text += f"**Timestamp:** {metadata.timestamp.isoformat()}\n"
+        result_text += f"**Cached:** {metadata.cache_hit}\n\n"
 
-    result_text += "## Content\n\n"
-    for para in article.paragraphs:
-        result_text += f"{para}\n\n"
+        result_text += "## Content\n\n"
+        for para in content.paragraphs:
+            result_text += f"{para}\n\n"
 
-    if article.references:
-        result_text += "## Scripture References\n\n"
-        for ref in article.references:
-            result_text += f"- {ref}\n"
+        if content.references:
+            result_text += "## Scripture References\n\n"
+            for ref in content.references:
+                result_text += f"- {ref}\n"
 
     return [TextContent(type="text", text=result_text)]
 
