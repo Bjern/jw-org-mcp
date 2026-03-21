@@ -58,6 +58,18 @@ addopts = "--cov=jw_org_mcp --cov-report=term-missing --cov-report=html"
 [tool.bandit]
 exclude_dirs = ["tests"]
 
+[tool.uv]
+# Security: Override transitive dependencies to fix known vulnerabilities
+# PyJWT <=2.11.0: CVE-2026-28498 - accepts unknown `crit` header extensions (GHSA #19)
+# diskcache <=5.6.3: unsafe pickle deserialization (GHSA #18) - no patch available yet,
+#   pulled in via fastmcp -> py-key-value-aio[disk]; excluded by constraining to memory-only
+override-dependencies = [
+    "pyjwt>=2.12.0",
+]
+constraint-dependencies = [
+    "pyjwt>=2.12.0",
+]
+
 [dependency-groups]
 dev = [
     "pytest>=8.4.2",
