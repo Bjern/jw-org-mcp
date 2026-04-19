@@ -61,13 +61,20 @@ exclude_dirs = ["tests"]
 [tool.uv]
 # Security: Override transitive dependencies to fix known vulnerabilities
 # PyJWT <=2.11.0: CVE-2026-28498 - accepts unknown `crit` header extensions (GHSA #19)
-# diskcache <=5.6.3: unsafe pickle deserialization (GHSA #18) - no patch available yet,
-#   pulled in via fastmcp -> py-key-value-aio[disk]; excluded by constraining to memory-only
+# authlib <1.6.11: CSRF when using cache (GHSA #34)
+# python-multipart <0.0.26: DoS via large multipart preamble/epilogue (GHSA #33)
+# Pygments <2.20.0: ReDoS in GUID matching (GHSA #27)
 override-dependencies = [
     "pyjwt>=2.12.0",
+    "authlib>=1.6.11",
+    "python-multipart>=0.0.26",
+    "pygments>=2.20.0",
 ]
 constraint-dependencies = [
     "pyjwt>=2.12.0",
+    "authlib>=1.6.11",
+    "python-multipart>=0.0.26",
+    "pygments>=2.20.0",
 ]
 
 [dependency-groups]
